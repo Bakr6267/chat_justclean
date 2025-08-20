@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JustClean Customer Service Scripts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .copied-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-weight: 500;
+        }
+        
+        [dir="rtl"] .search-box {
+            direction: rtl;
+        }
+        [dir="ltr"] .search-box {
+            direction: ltr;
+        }
+        
+        .draggable-row {
+            cursor: move;
+            transition: all 0.2s ease;
+        }
+        
+        .dragging {
+            opacity: 0.6;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .drag-over {
+            border-top: 3px solid #667eea;
+        }
+        
+        .drag-handle {
+            cursor: move;
+            color: #667eea;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .drag-handle:hover {
+            color: #764ba2;
+            transform: scale(1.1);
+        }
+        
+        .gradient-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .gradient-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: all 0.3s ease;
+        }
+        
+        .gradient-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .add-button {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        
+        .add-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+        }
+        
+        .export-button {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .export-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
+            backdrop-filter: blur(20px);
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .close:hover {
+            color: #667eea;
+        }
+        
+        .form-input {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            background: rgba(255, 255, 255, 1);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .table-row-even {
+            background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(248,250,252,0.8));
+        }
+        
+        .table-row-odd {
+            background: linear-gradient(135deg, rgba(248,250,252,0.8), rgba(241,245,249,0.8));
+        }
+        
+        .status-badge {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Status Badge -->
+    <div class="status-badge">
+        💾 الحفظ التلقائي مُفعل
+    </div>
+    
+    <!-- Notification -->
+    <div class="copied-notification" id="copyNotification">تم النسخ! ✨</div>
+    
+    <!-- Add Script Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">إضافة سكربت جديد 📝</h2>
+            <form id="addScriptForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">الفئة</label>
+                    <select id="newCategory" class="form-input w-full p-3 rounded-lg focus:outline-none" required>
+                        <option value="greetings">التحية والإتصال</option>
+                        <option value="waiting">حالات الانتظار</option>
+                        <option value="delays">حالات التأخير</option>
+                        <option value="cancellations">حالات الإلغاء</option>
+                        <option value="complaints">شكاوي العملاء</option>
+                        <option value="orders">متابعة الطلبات</option>
+                        <option value="payments">مشاكل الدفع</option>
+                        <option value="items">مشاكل الأغراض</option>
+                        <option value="feedback">ملاحظات عامة</option>
+                        <option value="closing">انهاء المحادثة</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">الحالة / الموقف</label>
+                    <input type="text" id="newSituation" class="form-input w-full p-3 rounded-lg focus:outline-none" required placeholder="أدخل وصف الحالة...">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">الرد باللغة العربية</label>
+                    <textarea id="newArabic" class="form-input w-full p-3 rounded-lg focus:outline-none h-24" required placeholder="أدخل الرد باللغة العربية..."></textarea>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">الرد باللغة الإنجليزية</label>
+                    <textarea id="newEnglish" class="form-input w-full p-3 rounded-lg focus:outline-none h-24" required placeholder="Enter the English response..."></textarea>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="gradient-button text-white px-6 py-3 rounded-lg font-medium flex-1">
+                        إضافة السكربت ✨
+                    </button>
+                    <button type="button" id="cancelAdd" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Header -->
+    <header class="text-white py-8 mb-8">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">JustClean Customer Service ✨</h1>
+                    <p class="text-xl opacity-90">أداة للوصول السريع إلى السكربتات والردود الجاهزة</p>
+                </div>
+                <div class="flex gap-4">
+                    <button id="exportBtn" class="export-button text-white px-6 py-3 rounded-lg font-medium transition">
+                        تصدير البيانات 📥
+                    </button>
+                    <button id="importBtn" class="bg-gradient-to-r from-orange-400 to-red-500 text-white px-6 py-3 rounded-lg font-medium transition">
+                        استيراد البيانات 📤
+                    </button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                    <button id="addScriptBtn" class="add-button text-white px-6 py-3 rounded-lg font-medium transition">
+                        إضافة سكربت جديد +
+                    </button>
+                    <button id="toggleLanguage" class="bg-white text-purple-600 px-6 py-3 rounded-lg font-medium transition hover:bg-gray-100">
+                        English/عربي
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 pb-8">
+        <!-- Search and Filters -->
+        <div class="mb-8 gradient-card p-8 rounded-2xl">
+            <div class="search-box mb-6">
+                <input type="text" id="searchInput" placeholder="ابحث عن السكربت... 🔍" class="form-input w-full p-4 rounded-xl focus:outline-none text-lg">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                <select id="categoryFilter" class="form-input p-4 rounded-xl focus:outline-none">
+                    <option value="all">كل الفئات 📋</option>
+                    <option value="greetings">التحية والإتصال 👋</option>
+                    <option value="waiting">حالات الانتظار ⏳</option>
+                    <option value="delays">حالات التأخير ⏰</option>
+                    <option value="cancellations">حالات الإلغاء ❌</option>
+                    <option value="complaints">شكاوي العملاء 😞</option>
+                    <option value="orders">متابعة الطلبات 📦</option>
+                    <option value="payments">مشاكل الدفع 💳</option>
+                    <option value="items">مشاكل الأغراض 👔</option>
+                    <option value="feedback">ملاحظات عامة 💭</option>
+                    <option value="closing">انهاء المحادثة 👋</option>
+                </select>
+                
+                <button id="resetFilters" class="bg-gradient-to-r from-gray-400 to-gray-600 text-white px-6 py-4 rounded-xl font-medium hover:from-gray-500 hover:to-gray-700 transition">
+                    إعادة تعيين 🔄
+                </button>
+                
+                <button id="clearAllBtn" class="bg-gradient-to-r from-red-500 to-red-700 text-white px-6 py-4 rounded-xl font-medium hover:from-red-600 hover:to-red-800 transition">
+                    مسح الكل 🗑️
+                </button>
+                
+                <div class="col-span-2 flex items-center justify-center bg-green-50 border-2 border-green-200 rounded-xl px-4">
+                    <span class="text-green-700 font-medium">📊 عدد السكربتات: <span id="scriptCount">0</span></span>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl">
+                <p class="text-blue-700 font-medium">💡 جميع تغييراتك محفوظة تلقائياً على جهازك • يمكنك سحب الصفوف لإعادة ترتيبها • استخدم "تصدير" لحفظ نسخة احتياطية</p>
+            </div>
+        </div>
+        
+        <!-- Scripts Table -->
+        <div class="gradient-card rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                        <tr>
+                            <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">ترتيب</th>
+                            <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">الحالة / الموقف</th>
+                            <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">الرد باللغة العربية</th>
+                            <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">الرد باللغة الإنجليزية</th>
+                            <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scriptsTable">
+                        <!-- Data will be inserted here via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Default scripts data
+        const defaultScripts = [
+            {
+                id: 0,
+                category: "greetings",
+                situation: "التحية الأولية",
+                arabic: "مرحبا معك ابوبكر من خدمة عملاء تطبيق جست كلين.. كيف يمكنني مساعدتك؟",
+                english: "Hello, this is abobakr from JustClean customer care. How may I assist you?"
+            },
+            {
+                id: 1,
+                category: "delays",
+                situation: "تأخير خدمة الهوم كليننج",
+                arabic: "بنعتذر منك اخى الكريم نظراً لتأخير العاملة وسوف ارسل الحين للقسم المختص للتاكيد مع مزود الخدمه لسرعه وصول العاملة لك",
+                english: "We apologize for the cleaner's delay and right now I will send to our department to check with the service provider to make the cleaner contact you as soon as possible"
+            },
+            {
+                id: 2,
+                category: "delays",
+                situation: "تأخير خدمة الكار واش",
+                arabic: "بنعتذر منك اخى الكريم وسوف ارسل الحين للقسم المختص للتاكيد مع مزود الخدمه لسرعه وصول فريق الغسيل لك",
+                english: "We apologize for the delay and right now I will send to our department to check with the service provider to make the washing team contact you as soon as possible"
+            },
+            {
+                id: 3,
+                category: "delays",
+                situation: "تأخير اللاندرى",
+                arabic: "بنعتذر منك اخى الكريم و الحين سوف اراسل للقسم المختص للتواصل مع المغسله لسرعه وصول الاغراض لك و تواصل السائق معك",
+                english: "We are so sorry for that and right now I will send to our concerned department to check with laundry to make driver contact you as soon as possible to deliver your items"
+            },
+            {
+                id: 4,
+                category: "cancellations",
+                situation: "إلغاء طلب الهوم كليننج",
+                arabic: "أسف لسماع ذلك، هل من الممكن ان اعرف سبب الالغاء؟",
+                english: "May I know the reason please?"
+            },
+            {
+                id: 5,
+                category: "cancellations",
+                situation: "إلغاء طلب الكار واش",
+                arabic: "سوف نقوم الأن بألغاء طلبك ونأمل فى خدمتك مرة أخرى فى أقرب وقت",
+                english: "We will now cancel your order and we hope to serve you again soon"
+            },
+            {
+                id: 6,
+                category: "cancellations",
+                situation: "إلغاء بسبب عدم قبول الطلب",
+                arabic: "بنعتذر منك اخى الكريم نظراً لان لم يتم قبول الطلب من اى مزود خدمه فتم الغاء الطلب تلقائى وارجاع المبلغ لنفس المكان الذى سحب منه تلقائى",
+                english: "We apologize because no service provider accepted the order so it was automatically cancelled and the amount was refunded to the same source"
+            },
+            {
+                id: 7,
+                category: "complaints",
+                situation: "شكوى على خدمة",
+                arabic: "نحن نأسف حقاً للأمر، سأقوم بإرسال شكواك للقسم المختص لمعالجة الموضوع بأقصى سرعة",
+                english: "We sincerely apologize for this, I will forward your complaint to the concerned department to handle it as soon as possible"
+            },
+            {
+                id: 8,
+                category: "complaints",
+                situation: "شكوى على سائق",
+                arabic: "نعتذر بشدة عن تصرف السائق وسنتخذ الإجراءات اللازمة لضمان عدم تكرار ذلك",
+                english: "We sincerely apologize for the driver's behavior and we will take necessary actions to ensure this doesn't happen again"
+            },
+            {
+                id: 9,
+                category: "orders",
+                situation: "تأكيد الطلب",
+                arabic: "سوف اتأكد من القسم المختص لتأكيد طلبك ونعود اليك في أقرب وقت",
+                english: "I will check with the concerned department to confirm your order and get back to you asap"
+            },
+            {
+                id: 10,
+                category: "orders",
+                situation: "متابعة الطلب",
+                arabic: "طلبك قيد المتابعة حالياً مع القسم المختص وسيتم إعلامك بأي مستجدات",
+                english: "Your order is currently being followed up with the concerned department and we will update you with any developments"
+            },
+            {
+                id: 11,
+                category: "payments",
+                situation: "إستعلام عن الريفند",
+                arabic: "اخي بالفعل تم الريفند من جانبنا وهذه العملية قد تستغرق بعض الوقت حسب البنك المستخدم",
+                english: "The refund has been processed from our side and it may take some time depending on your bank"
+            },
+            {
+                id: 12,
+                category: "payments",
+                situation: "مشكلة في الدفع",
+                arabic: "نعتذر عن المشكلة التي واجهتك في الدفع، هل يمكنك مشاركة التفاصيل معنا لمساعدتك؟",
+                english: "We apologize for the payment issue you encountered, could you please share details so we can assist?"
+            },
+            {
+                id: 13,
+                category: "items",
+                situation: "اغراض ناقصة",
+                arabic: "بنعتذر اخى الكريم والحين سوف ارسل للقسم المختص للتاكيد مع المغسله عن الامر وبمجرد تلقى الرد منهم قسم متابعه الطلبات سوف يتواصل معك",
+                english: "We apologize and will check with the laundry regarding missing items, the follow-up department will contact you once we get a response"
+            },
+            {
+                id: 14,
+                category: "items",
+                situation: "تسجيل أغراض خطأ",
+                arabic: "نأسف أذا المصبغة قامت بأدخال عدد قطع غير صحيح فى طلبك، سوف نخبر القسم المختص بمراجعة الطلب مرة اخرى مع المصبغه وتعديل الطلب فى أقرب وقت",
+                english: "We apologize if the laundry entered wrong item count, we'll ask the concerned department to review and correct the order"
+            },
+            {
+                id: 15,
+                category: "feedback",
+                situation: "ملاحظات على التطبيق",
+                arabic: "نحن شاكرين جدا لتعليقك وسوف يأخذ بالأعتبار أرساله الى القسم المختص لتطوير الخدمة لدينا. أستمر بتزويدنا بتعليقاتك حتى نتمكن من تحسين خدماتنا لك",
+                english: "We highly appreciate your feedback which will be forwarded to improve our service. Keep providing feedback so we can serve you better"
+            },
+            {
+                id: 16,
+                category: "waiting",
+                situation: "اطلب من العميل الانتظار",
+                arabic: "اسمح لي بمراجعه تفاصيل الطلب.. رجاءا ابقى معانا بضع دقائق علي الانتظار",
+                english: "Please bear with me for a few minutes to review your order details."
+            },
+            {
+                id: 17,
+                category: "waiting",
+                situation: "إعلام العميل بالانتظار",
+                arabic: "إذا كنت لا تمانع في وضعك في الانتظار ، فسأكون معك خلال لحظات",
+                english: "If you don't mind me putting you on hold, I'll be with you in a few moments."
+            },
+            {
+                id: 18,
+                category: "waiting",
+                situation: "متابعة انتظار العميل",
+                arabic: "أسف على التأخير، مازلت اراجع بعض البيانات الخاصة بك، اسمح لى بالانتظار لمزيد من الوقت",
+                english: "I'm sorry for this delay. I'm still checking your details, please give me another moment."
+            },
+            {
+                id: 19,
+                category: "feedback",
+                situation: "إنهاء المحادثة",
+                arabic: "شكرا لاتصالك على جست كلين. إذا طرأت لديك اي اسئله اخرى فلا تتردد في الاتصال بنا عبر خدمة المحادثة المباشرة أو عن طريق الايميل customercare@Justclean.com",
+                english: "Thank you for contacting JustClean. For any further questions, please contact us via Live Chat or email customercare@Justclean.com"
+            },
+            {
+                id: 20,
+                category: "closing",
+                situation: "عدم استجابة العميل",
+                arabic: "عذرا لم نتلق منك أي رد منذ فترة، سنقوم الآن بالخروج من المحادثة ونرجو عدم التردد في محادثتنا مرة أخرى إن أردت مساعدتنا، شكرا لاتصالك بجست كلين",
+                english: "Sorry, we didn't hear from you in a while. This chat will be closed, but please feel free to contact us again if you need any assistance. Thank you for contacting JustClean."
+            }
+        ];
+
+        // Load scripts from localStorage or use defaults
+        function loadScripts() {
+            const saved = localStorage.getItem('justCleanScripts');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error('Error loading scripts:', e);
+                    return [...defaultScripts];
+                }
+            }
+            return [...defaultScripts];
+        }
+
+        // Save scripts to localStorage
+        function saveScripts() {
+            try {
+                localStorage.setItem('justCleanScripts', JSON.stringify(scripts));
+                localStorage.setItem('justCleanScriptsBackup', JSON.stringify(scripts));
+                console.log('Scripts saved successfully');
+            } catch (e) {
+                console.error('Error saving scripts:', e);
+                showNotification('خطأ في حفظ البيانات! 😢', 'error');
+            }
+        }
+
+        // DOM Elements
+        const scriptsTable = document.getElementById('scriptsTable');
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const resetFilters = document.getElementById('resetFilters');
+        const toggleLanguage = document.getElementById('toggleLanguage');
+        const copyNotification = document.getElementById('copyNotification');
+        const addScriptBtn = document.getElementById('addScriptBtn');
+        const addModal = document.getElementById('addModal');
+        const addScriptForm = document.getElementById('addScriptForm');
+        const cancelAdd = document.getElementById('cancelAdd');
+        const closeModal = document.querySelector('.close');
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const importFile = document.getElementById('importFile');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const scriptCount = document.getElementById('scriptCount');
+        
+        // Initialize variables
+        let scripts = loadScripts();
+        let currentLanguage = 'ar';
+        let filteredScripts = [...scripts];
+        let draggedElement = null;
+        let nextId = Math.max(...scripts.map(s => s.id), 0) + 1;
+
+        // Get category emoji
+        function getCategoryEmoji(category) {
+            const emojis = {
+                greetings: "👋",
+                waiting: "⏳",
+                delays: "⏰",
+                cancellations: "❌",
+                complaints: "😞",
+                orders: "📦",
+                payments: "💳",
+                items: "👔",
+                feedback: "💭",
+                closing: "👋"
+            };
+            return emojis[category] || "📝";
+        }
+
+        // Update script count
+        function updateScriptCount() {
+            scriptCount.textContent = filteredScripts.length;
+        }
+
+        // Initialize the table
+        function renderScripts() {
+            scriptsTable.innerHTML = '';
+            
+            if (filteredScripts.length === 0) {
+                scriptsTable.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            <div class="text-4xl mb-4">📝</div>
+                            <div class="text-lg font-medium">لا توجد سكربتات</div>
+                            <div class="text-sm mt-2">اضغط على "إضافة سكربت جديد" لبدء إضافة السكربتات</div>
+                        </td>
+                    </tr>
+                `;
+                updateScriptCount();
+                return;
+            }
+            
+            filteredScripts.forEach((script, index) => {
+                const row = document.createElement('tr');
+                const isEven = index % 2 === 0;
+                row.className = `hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 draggable-row transition-all duration-200 ${isEven ? 'table-row-even' : 'table-row-odd'}`;
+                row.draggable = true;
+                row.dataset.index = index;
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="drag-handle">≡</div>
+                    </td>
+                    <td class="px-6 py-4 font-medium text-gray-800">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">${getCategoryEmoji(script.category)}</span>
+                            <span>${script.situation}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-gray-700 leading-relaxed">${script.arabic}</td>
+                    <td class="px-6 py-4 text-gray-700 leading-relaxed">${script.english}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex gap-2">
+                            <button onclick="copyToClipboard('${script.arabic.replace(/'/g, "\\'")}')" class="gradient-button text-white px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105">
+                                نسخ عربي 📋
+                            </button>
+                            <button onclick="copyToClipboard('${script.english.replace(/'/g, "\\'")}')" class="bg-gradient-to-r from-green-400 to-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105">
+                                نسخ انجليزي 📋
+                            </button>
+                            <button onclick="deleteScript(${script.id})" class="bg-gradient-to-r from-red-400 to-pink-500 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                `;
+                
+                // Add drag and drop event listeners
+                row.addEventListener('dragstart', handleDragStart);
+                row.addEventListener('dragover', handleDragOver);
+                row.addEventListener('drop', handleDrop);
+                row.addEventListener('dragend', handleDragEnd);
+                row.addEventListener('dragenter', handleDragEnter);
+                row.addEventListener('dragleave', handleDragLeave);
+                
+                scriptsTable.appendChild(row);
+            });
+            
+            updateScriptCount();
+        }
+
+        // Drag and Drop functions
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.outerHTML);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            if (draggedElement !== this) {
+                const draggedIndex = parseInt(draggedElement.dataset.index);
+                const targetIndex = parseInt(this.dataset.index);
+                
+                // Move the item in the array
+                const draggedItem = filteredScripts[draggedIndex];
+                filteredScripts.splice(draggedIndex, 1);
+                filteredScripts.splice(targetIndex, 0, draggedItem);
+                
+                // Update main scripts array
+                scripts = [...filteredScripts];
+                saveScripts();
+                renderScripts();
+                showNotification('تم إعادة ترتيب السكربتات! ✨', 'success');
+            }
+
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            
+            // Remove drag-over class from all elements
+            const rows = scriptsTable.querySelectorAll('tr');
+            rows.forEach(row => row.classList.remove('drag-over'));
+            
+            draggedElement = null;
+        }
+
+        // Copy to clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                copyNotification.textContent = currentLanguage === 'ar' ? 'تم النسخ! ✨' : 'Copied! ✨';
+                copyNotification.style.display = 'block';
+                setTimeout(() => {
+                    copyNotification.style.display = 'none';
+                }, 2000);
+            });
+        }
+
+        // Delete script function
+        function deleteScript(id) {
+            if (confirm('هل أنت متأكد من حذف هذا السكربت؟')) {
+                scripts = scripts.filter(script => script.id !== id);
+                saveScripts();
+                filterScripts();
+                showNotification('تم حذف السكربت! 🗑️', 'success');
+            }
+        }
+
+        // Show notification function
+        function showNotification(message, type = 'success') {
+            copyNotification.textContent = message;
+            copyNotification.style.display = 'block';
+            copyNotification.style.background = type === 'success' 
+                ? 'linear-gradient(135deg, #10b981, #059669)' 
+                : 'linear-gradient(135deg, #ef4444, #dc2626)';
+            setTimeout(() => {
+                copyNotification.style.display = 'none';
+                copyNotification.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+            }, 3000);
+        }
+
+        // Filter scripts
+        function filterScripts() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const category = categoryFilter.value;
+            
+            filteredScripts = scripts.filter(script => {
+                const matchesSearch = 
+                    script.situation.toLowerCase().includes(searchTerm) ||
+                    script.arabic.toLowerCase().includes(searchTerm) ||
+                    script.english.toLowerCase().includes(searchTerm);
+                
+                const matchesCategory = 
+                    category === 'all' || script.category === category;
+                
+                return matchesSearch && matchesCategory;
+            });
+            
+            renderScripts();
+        }
+
+        // Export data
+        function exportData() {
+            const data = {
+                scripts: scripts,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `justclean-scripts-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('تم تصدير البيانات بنجاح! 📥', 'success');
+        }
+
+        // Import data
+        function importData(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.scripts && Array.isArray(data.scripts)) {
+                        if (confirm('هل تريد استبدال جميع السكربتات الحالية؟ (سيتم حفظ نسخة احتياطية)')) {
+                            // Create backup
+                            localStorage.setItem('justCleanScriptsBackup', JSON.stringify(scripts));
+                            
+                            scripts = data.scripts;
+                            nextId = Math.max(...scripts.map(s => s.id), 0) + 1;
+                            saveScripts();
+                            filterScripts();
+                            showNotification('تم استيراد البيانات بنجاح! 📤', 'success');
+                        }
+                    } else {
+                        showNotification('ملف غير صحيح! 😞', 'error');
+                    }
+                } catch (error) {
+                    showNotification('خطأ في قراءة الملف! 😞', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (confirm('هل أنت متأكد من حذف جميع السكربتات؟ (سيتم حفظ نسخة احتياطية)')) {
+                if (confirm('تحذير: هذا سيمحو جميع البيانات! هل أنت متأكد؟')) {
+                    // Create backup before clearing
+                    localStorage.setItem('justCleanScriptsBackup', JSON.stringify(scripts));
+                    
+                    scripts = [];
+                    saveScripts();
+                    filterScripts();
+                    showNotification('تم مسح جميع البيانات! 🗑️', 'success');
+                }
+            }
+        }
+
+        // Toggle language
+        function toggleDir() {
+            currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+            document.documentElement.lang = currentLanguage;
+            document.documentElement.dir = currentLanguage === 'ar' ? 'rtl' : 'ltr';
+            
+            // Update UI elements
+            if (currentLanguage === 'ar') {
+                searchInput.placeholder = 'ابحث عن السكربت... 🔍';
+                document.querySelector('h1').textContent = 'JustClean Customer Service ✨';
+                document.querySelector('p').textContent = 'أداة للوصول السريع إلى السكربتات والردود الجاهزة';
+                toggleLanguage.textContent = 'English/عربي';
+                addScriptBtn.textContent = 'إضافة سكربت جديد +';
+                exportBtn.textContent = 'تصدير البيانات 📥';
+                importBtn.textContent = 'استيراد البيانات 📤';
+            } else {
+                searchInput.placeholder = 'Search for script... 🔍';
+                document.querySelector('h1').textContent = 'JustClean Customer Service ✨';
+                document.querySelector('p').textContent = 'Quick access tool for ready-made scripts and responses';
+                toggleLanguage.textContent = 'English/عربي';
+                addScriptBtn.textContent = 'Add New Script +';
+                exportBtn.textContent = 'Export Data 📥';
+                importBtn.textContent = 'Import Data 📤';
+            }
+            
+            // Update table headers
+            if (currentLanguage === 'ar') {
+                document.querySelector('thead tr').innerHTML = `
+                    <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">ترتيب</th>
+                    <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">الحالة / الموقف</th>
+                    <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">الرد باللغة العربية</th>
+                    <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">الرد باللغة الإنجليزية</th>
+                    <th class="px-6 py-4 text-right text-sm font-bold uppercase tracking-wider">إجراءات</th>
+                `;
+            } else {
+                document.querySelector('thead tr').innerHTML = `
+                    <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Order</th>
+                    <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Situation</th>
+                    <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Arabic Response</th>
+                    <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">English Response</th>
+                    <th class="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Actions</th>
+                `;
+            }
+            
+            renderScripts();
+        }
+
+        // Modal functions
+        function openModal() {
+            addModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModalFunc() {
+            addModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            addScriptForm.reset();
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', filterScripts);
+        categoryFilter.addEventListener('change', filterScripts);
+        resetFilters.addEventListener('click', () => {
+            searchInput.value = '';
+            categoryFilter.value = 'all';
+            filterScripts();
+            showNotification('تم إعادة تعيين الفلاتر! 🔄', 'success');
+        });
+        
+        toggleLanguage.addEventListener('click', toggleDir);
+        addScriptBtn.addEventListener('click', openModal);
+        cancelAdd.addEventListener('click', closeModalFunc);
+        closeModal.addEventListener('click', closeModalFunc);
+        exportBtn.addEventListener('click', exportData);
+        importBtn.addEventListener('click', () => importFile.click());
+        importFile.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                importData(e.target.files[0]);
+            }
+        });
+        clearAllBtn.addEventListener('click', clearAllData);
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (event) => {
+            if (event.target === addModal) {
+                closeModalFunc();
+            }
+        });
+
+        // Handle form submission
+        addScriptForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newScript = {
+                id: nextId++,
+                category: document.getElementById('newCategory').value,
+                situation: document.getElementById('newSituation').value,
+                arabic: document.getElementById('newArabic').value,
+                english: document.getElementById('newEnglish').value
+            };
+            
+            scripts.push(newScript);
+            saveScripts();
+            filterScripts();
+            closeModalFunc();
+            showNotification('تم إضافة السكربت بنجاح! 🎉', 'success');
+        });
+
+        // Auto-save on page unload
+        window.addEventListener('beforeunload', () => {
+            saveScripts();
+        });
+
+        // Initial render
+        filterScripts();
+        
+        // Show initial notification
+        setTimeout(() => {
+            showNotification('مرحباً! جميع تغييراتك محفوظة تلقائياً 💾', 'success');
+        }, 1000);
+    </script>
+</body>
+</html>
+                
