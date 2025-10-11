@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JustClean Scripts - أداة السكريبتات</title>
+    <title>JustClean Scripts - مدمج مع السكريبتات الافتراضية</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -348,57 +348,245 @@
     </main>
 
     <script>
-        // Simple data structure
-        let scripts = loadScripts() || getDefaultScripts();
-        let filteredScripts = [...scripts];
-        let nextId = Math.max(...scripts.map(s => s.id || 0), 0) + 1;
+        // === CONFIGURATION ===
+        // Default scripts embedded in the code (from the JSON you provided)
+        const defaultScripts = [
+  {
+    "id": 24,
+    "category": "greetings",
+    "situation": "تحية و انتظار ",
+    "arabic": "مرحبا معك ابوبكر من خدمة عملاء تطبيق جست كلين. اسمح لي بمراجعه تفاصيل الطلب.. رجاءا ابقى معانا بضع دقائق علي الانتظار",
+    "english": "Hello, this is abobakr from JustClean customer care. Please bear with me for a few minutes to review your order details."
+  },
+  {
+    "id": 0,
+    "category": "greetings",
+    "situation": "التحية الأولية",
+    "arabic": "مرحبا معك ابوبكر من خدمة عملاء تطبيق جست كلين.. كيف يمكنني مساعدتك؟",
+    "english": "Hello, this is abobakr from JustClean customer care. How may I assist you?"
+  },
+  {
+    "id": 16,
+    "category": "waiting",
+    "situation": "اطلب من العميل الانتظار",
+    "arabic": "اسمح لي بمراجعه تفاصيل الطلب.. رجاءا ابقى معانا بضع دقائق علي الانتظار",
+    "english": "Please bear with me for a few minutes to review your order details."
+  },
+  {
+    "id": 22,
+    "category": "waiting",
+    "situation": "انهاء الانتظار ",
+    "arabic": "شكرا لأنتظارك، نحن نقدر حقا صبرك ونعتذر لك عن اى تأخير ",
+    "english": "Thank you for holding. I really appreciate your patience"
+  },
+  {
+    "id": 23,
+    "category": "feedback",
+    "situation": "القسم المختص",
+    "arabic": "سوف أرسل للقسم المختص وسيتم التواصل معك هاتفياً فور وصول الرد.",
+    "english": "I will send it to the relevant department and they will contact you by phone as soon as the response arrives."
+  },
+  {
+    "id": 26,
+    "category": "order",
+    "situation": "طلب للقسم",
+    "arabic": "لقد ارسلت طلبك للقسم المختص وسيتم التواصل معك هاتفياً فور وصول الرد.",
+    "english": "Your request has been sent to the relevant department, and you will be contacted by phone as soon as the response\u00a0arrives."
+  },
+  {
+    "id": 20,
+    "category": "closing",
+    "situation": "عدم استجابة العميل",
+    "arabic": "عذرا لم نتلق منك أي رد منذ فترة، سنقوم الآن بالخروج من المحادثة ونرجو عدم التردد في محادثتنا مرة أخرى إن أردت مساعدتنا، شكرا لاتصالك بجست كلين",
+    "english": "Sorry, we didn't hear from you in a while. This chat will be closed, but please feel free to contact us again if you need any assistance. Thank you for contacting JustClean."
+  },
+  {
+    "id": 21,
+    "category": "closing",
+    "situation": "انهاء المحادثة ",
+    "arabic": "هل يوجد شيء اخر استطيع مساعدتك به اليوم؟",
+    "english": "is there anything else I might help you with today?"
+  },
+  {
+    "id": 19,
+    "category": "feedback",
+    "situation": "إنهاء المحادثة",
+    "arabic": "شكرا لاتصالك على جست كلين. إذا طرأت لديك اي اسئله اخرى فلا تتردد في الاتصال بنا عبر خدمة المحادثة المباشرة أو عن طريق الايميل customercare@Justclean.com",
+    "english": "Thank you for contacting JustClean. For any further questions, please contact us via Live Chat or email customercare@Justclean.com"
+  },
+  {
+    "id": 25,
+    "category": "delays",
+    "situation": "reschedule out of the policy",
+    "arabic": "الفكرة ان مزود الخدمه الذي قمت بحجزه يقوم بتخصيص موظفين مخصوصا لطلبك و يكون الموعد الذي قمت بحجزه غير متاح للاستخدام من قبل اي عميل اخر ، و لذلك\nو طبقا للشروط و الاحكام الخاصه بالخدمه فان الغاء او اعاده جدولة الموعد غير متاح",
+    "english": "The service provider you've chosen is assigning his workers to your order, and also the time you've chosen is allocated to you so no other customer can reserve it. Hence, according to the terms and conditions of the service, cancelling or rescheduling is not possible, unfortunately."
+  },
+  {
+    "id": 18,
+    "category": "waiting",
+    "situation": "متابعة انتظار العميل",
+    "arabic": "أسف على التأخير، مازلت اراجع بعض البيانات الخاصة بك، اسمح لى بالانتظار لمزيد من الوقت",
+    "english": "I'm sorry for this delay. I'm still checking your details, please give me another moment."
+  },
+  {
+    "id": 17,
+    "category": "waiting",
+    "situation": "إعلام العميل بالانتظار",
+    "arabic": "إذا كنت لا تمانع في وضعك في الانتظار ، فسأكون معك خلال لحظات",
+    "english": "If you don't mind me putting you on hold, I'll be with you in a few moments."
+  },
+  {
+    "id": 1,
+    "category": "delays",
+    "situation": "تأخير خدمة الهوم كليننج",
+    "arabic": "بنعتذر منك اخى الكريم نظراً لتأخير العاملة وسوف ارسل الحين للقسم المختص للتاكيد مع مزود الخدمه لسرعه وصول العاملة لك",
+    "english": "We apologize for the cleaner's delay and right now I will send to our department to check with the service provider to make the cleaner contact you as soon as possible"
+  },
+  {
+    "id": 2,
+    "category": "delays",
+    "situation": "تأخير خدمة الكار واش",
+    "arabic": "بنعتذر منك اخى الكريم وسوف ارسل الحين للقسم المختص للتاكيد مع مزود الخدمه لسرعه وصول فريق الغسيل لك",
+    "english": "We apologize for the delay and right now I will send to our department to check with the service provider to make the washing team contact you as soon as possible"
+  },
+  {
+    "id": 3,
+    "category": "delays",
+    "situation": "تأخير اللاندرى",
+    "arabic": "بنعتذر منك اخى الكريم و الحين سوف اراسل للقسم المختص للتواصل مع المغسله لسرعه وصول الاغراض لك و تواصل السائق معك",
+    "english": "We are so sorry for that and right now I will send to our concerned department to check with laundry to make driver contact you as soon as possible to deliver your items"
+  },
+  {
+    "id": 27,
+    "category": "greeting",
+    "situation": "اخرى",
+    "arabic": "عميلنا العزيز, بالفعل يمكنكم كتابة ملاحظة اثناء الطلب بالمواصفات التى تريدينها وايضا اذا كان لديك عاملة مفضلة يمكنك كتابة اسمها حتى يتم إتخاذ هذا الامر فى الحسبان.",
+    "english": "Dear customer, you can indeed add a note during the order with the specifications you want, and if you have a preferred worker, you can write her name so that this matter is taken into account."
+  },
+  {
+    "id": 4,
+    "category": "cancellations",
+    "situation": "إلغاء طلب الهوم كليننج",
+    "arabic": "أسف لسماع ذلك، هل من الممكن ان اعرف سبب الالغاء؟",
+    "english": "May I know the reason please?"
+  },
+  {
+    "id": 5,
+    "category": "cancellations",
+    "situation": "إلغاء طلب الكار واش",
+    "arabic": "سوف نقوم الأن بألغاء طلبك ونأمل فى خدمتك مرة أخرى فى أقرب وقت",
+    "english": "We will now cancel your order and we hope to serve you again soon"
+  },
+  {
+    "id": 6,
+    "category": "cancellations",
+    "situation": "إلغاء بسبب عدم قبول الطلب",
+    "arabic": "بنعتذر منك اخى الكريم نظراً لان لم يتم قبول الطلب من اى مزود خدمه فتم الغاء الطلب تلقائى وارجاع المبلغ لنفس المكان الذى سحب منه تلقائى",
+    "english": "We apologize because no service provider accepted the order so it was automatically cancelled and the amount was refunded to the same source"
+  },
+  {
+    "id": 7,
+    "category": "complaints",
+    "situation": "شكوى على خدمة",
+    "arabic": "نحن نأسف حقاً للأمر، سأقوم بإرسال شكواك للقسم المختص لمعالجة الموضوع بأقصى سرعة",
+    "english": "We sincerely apologize for this, I will forward your complaint to the concerned department to handle it as soon as possible"
+  },
+  {
+    "id": 8,
+    "category": "complaints",
+    "situation": "شكوى على سائق",
+    "arabic": "نعتذر بشدة عن تصرف السائق وسنتخذ الإجراءات اللازمة لضمان عدم تكرار ذلك",
+    "english": "We sincerely apologize for the driver's behavior and we will take necessary actions to ensure this doesn't happen again"
+  },
+  {
+    "id": 9,
+    "category": "orders",
+    "situation": "تأكيد الطلب",
+    "arabic": "سوف اتأكد من القسم المختص لتأكيد طلبك ونعود اليك في أقرب وقت",
+    "english": "I will check with the concerned department to confirm your order and get back to you asap"
+  },
+  {
+    "id": 10,
+    "category": "orders",
+    "situation": "متابعة الطلب",
+    "arabic": "طلبك قيد المتابعة حالياً مع القسم المختص وسيتم إعلامك بأي مستجدات",
+    "english": "Your order is currently being followed up with the concerned department and we will update you with any developments"
+  },
+  {
+    "id": 11,
+    "category": "payments",
+    "situation": "إستعلام عن الريفند",
+    "arabic": "اخي بالفعل تم الريفند من جانبنا وهذه العملية قد تستغرق بعض الوقت حسب البنك المستخدم",
+    "english": "The refund has been processed from our side and it may take some time depending on your bank"
+  },
+  {
+    "id": 12,
+    "category": "payments",
+    "situation": "مشكلة في الدفع",
+    "arabic": "نعتذر عن المشكلة التي واجهتك في الدفع، هل يمكنك مشاركة التفاصيل معنا لمساعدتك؟",
+    "english": "We apologize for the payment issue you encountered, could you please share details so we can assist?"
+  },
+  {
+    "id": 13,
+    "category": "items",
+    "situation": "اغراض ناقصة",
+    "arabic": "بنعتذر اخى الكريم والحين سوف ارسل للقسم المختص للتاكيد مع المغسله عن الامر وبمجرد تلقى الرد منهم قسم متابعه الطلبات سوف يتواصل معك",
+    "english": "We apologize and will check with the laundry regarding missing items, the follow-up department will contact you once we get a response"
+  },
+  {
+    "id": 14,
+    "category": "items",
+    "situation": "تسجيل أغراض خطأ",
+    "arabic": "نأسف أذا المصبغة قامت بأدخال عدد قطع غير صحيح فى طلبك، سوف نخبر القسم المختص بمراجعة الطلب مرة اخرى مع المصبغه وتعديل الطلب فى أقرب وقت",
+    "english": "We apologize if the laundry entered wrong item count, we'll ask the concerned department to review and correct the order"
+  },
+  {
+    "id": 15,
+    "category": "feedback",
+    "situation": "ملاحظات على التطبيق",
+    "arabic": "نحن شاكرين جدا لتعليقك وسوف يأخذ بالأعتبار أرساله الى القسم المختص لتطوير الخدمة لدينا. أستمر بتزويدنا بتعليقاتك حتى نتمكن من تحسين خدماتنا لك",
+    "english": "We highly appreciate your feedback which will be forwarded to improve our service. Keep providing feedback so we can serve you better"
+  },
+  {
+    "id": 29,
+    "category": "other",
+    "situation": "rate the service ",
+    "arabic": "يمكنك تقييم الطلب فقط بعد أن يتم توصيله ودفعه، مما يعني أن حالة الطلب هي 'مكتمل' أو 'منتهي'. بعد ذلك، يمكنك الوصول إلى طلبك الأخير وستجد تقييم لكل شيء يتعلق بالخدمة، مثل التوصيل والسائق وجودة الخدمة.",
+    "english": "You can evaluate the order only after it has been delivered and paid for, meaning the order status is 'complete' or 'finished'. After that, you can access your last order and you will find an evaluation for everything related to the service, such as delivery, the driver, and service quality."
+  }
+];
 
-        // Default scripts
-        function getDefaultScripts() {
-            return [
-                {
-                    id: 1,
-                    category: "greeting",
-                    situation: "ترحيب أولي",
-                    arabic: "مرحباً، معك خدمة عملاء JustClean. كيف يمكنني مساعدتك؟",
-                    english: "Hello, this is JustClean customer service. How can I help you?"
-                },
-                {
-                    id: 2,
-                    category: "delay",
-                    situation: "تأخر العامل",
-                    arabic: "أعتذر عن التأخير. سأتواصل مع الفريق لتحديث موعد الوصول.",
-                    english: "I apologize for the delay. I'll contact the team to update the arrival time."
-                },
-                {
-                    id: 3,
-                    category: "cancel",
-                    situation: "إلغاء الطلب",
-                    arabic: "سيتم إلغاء طلبك وإرجاع المبلغ خلال 3-5 أيام عمل.",
-                    english: "Your order will be cancelled and refunded within 3-5 business days."
-                }
-            ];
-        }
+        // Helper: set of default IDs (so we can prevent deleting global defaults)
+        const defaultIds = new Set(defaultScripts.map(s => s.id));
 
-        // Load from storage
-        function loadScripts() {
+        // LocalStorage keys
+        const USER_KEY = 'justclean_user_scripts_v1';
+
+        // Load user scripts (only user-added ones)
+        function loadUserScripts() {
             try {
-                const saved = localStorage.getItem('justclean_scripts');
-                return saved ? JSON.parse(saved) : null;
+                const saved = localStorage.getItem(USER_KEY);
+                return saved ? JSON.parse(saved) : [];
             } catch (e) {
-                return null;
+                return [];
             }
         }
 
-        // Save to storage
-        function saveScripts() {
+        // Save user scripts (only user-added)
+        function saveUserScripts(userScripts) {
             try {
-                localStorage.setItem('justclean_scripts', JSON.stringify(scripts));
+                localStorage.setItem(USER_KEY, JSON.stringify(userScripts));
                 updateStatus('تم الحفظ');
             } catch (e) {
                 showNotification('خطأ في الحفظ', 'error');
             }
         }
+
+        // Initialize combined scripts (defaults + user-specific)
+        let userScripts = loadUserScripts();
+        let scripts = [...defaultScripts, ...userScripts];
+        let filteredScripts = [...scripts];
+        let nextId = Math.max(...scripts.map(s => s.id || 0), 0) + 1;
 
         // Update status
         function updateStatus(text) {
@@ -442,12 +630,21 @@
         function getCategoryName(category) {
             const names = {
                 greeting: 'ترحيب',
+                greetings: 'ترحيب',
                 delay: 'تأخير',
+                delays: 'تأخير',
                 cancel: 'إلغاء',
+                cancellations: 'إلغاء',
                 complaint: 'شكوى',
+                complaints: 'شكوى',
                 payment: 'دفع',
+                payments: 'دفع',
                 order: 'طلب',
-                other: 'أخرى'
+                orders: 'طلب',
+                other: 'أخرى',
+                items: 'أغراض',
+                feedback: 'ملاحظات',
+                closing: 'إنهاء'
             };
             return names[category] || category;
         }
@@ -474,6 +671,9 @@
                     row.draggable = true;
                     row.dataset.index = index;
                     
+                    // Disable delete button for default scripts
+                    const isDefault = defaultIds.has(script.id);
+                    
                     row.innerHTML = `
                         <td class="px-4 py-3">
                             <div class="drag-handle">≡</div>
@@ -493,7 +693,7 @@
                             </div>
                         </td>
                         <td class="px-4 py-3">
-                            <button onclick="deleteScript(${script.id})" class="btn-danger text-xs px-2 py-1">
+                            <button ${isDefault ? 'disabled title="سكريبت افتراضي لا يمكن حذفه" class="btn-danger opacity-50 cursor-not-allowed text-xs px-2 py-1"' : 'onclick="deleteScript('+script.id+')" class="btn-danger text-xs px-2 py-1"'}>
                                 حذف
                             </button>
                         </td>
@@ -521,9 +721,9 @@
             
             filteredScripts = scripts.filter(script => {
                 const matchesSearch = !search || 
-                    script.situation.toLowerCase().includes(search) ||
-                    script.arabic.toLowerCase().includes(search) ||
-                    script.english.toLowerCase().includes(search);
+                    (script.situation && script.situation.toLowerCase().includes(search)) ||
+                    (script.arabic && script.arabic.toLowerCase().includes(search)) ||
+                    (script.english && script.english.toLowerCase().includes(search));
                 
                 const matchesCategory = category === 'all' || script.category === category;
                 
@@ -533,17 +733,24 @@
             renderTable();
         }
 
-        // Delete script
+        // Delete script (only user-added scripts can be deleted)
         function deleteScript(id) {
+            if (defaultIds.has(id)) {
+                showNotification('لا يمكن حذف السكريبت الافتراضي', 'error');
+                return;
+            }
             if (confirm('هل تريد حذف هذا السكريبت؟')) {
-                scripts = scripts.filter(s => s.id !== id);
-                saveScripts();
+                // remove from userScripts
+                userScripts = userScripts.filter(s => s.id !== id);
+                // rebuild combined
+                scripts = [...defaultScripts, ...userScripts];
+                saveUserScripts(userScripts);
                 filterScripts();
                 showNotification('تم الحذف');
             }
         }
 
-        // Add script
+        // Add script (adds to userScripts only)
         function addScript(data) {
             const newScript = {
                 id: nextId++,
@@ -552,62 +759,72 @@
                 arabic: data.arabic,
                 english: data.english
             };
-            
-            scripts.push(newScript);
-            saveScripts();
+            userScripts.push(newScript);
+            scripts = [...defaultScripts, ...userScripts];
+            saveUserScripts(userScripts);
             filterScripts();
             showNotification('تم إضافة السكريبت');
         }
 
-        // Export data
+        // Export data (exports only user scripts by default, but includes metadata)
         function exportData() {
             const data = {
-                scripts: scripts,
+                defaultScriptsExported: defaultScripts.length,
+                userScripts: userScripts,
                 exportDate: new Date().toISOString()
             };
-            
             const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `justclean-scripts-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `justclean-user-scripts-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            
             showNotification('تم التصدير');
         }
 
-        // Import data
+        // Import data (replaces user scripts only)
         function importData(file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if (data.scripts && Array.isArray(data.scripts)) {
-                        if (confirm('هل تريد استبدال كل السكريبتات الحالية؟')) {
-                            scripts = data.scripts;
+                    // accept both {scripts: [...]} and {userScripts: [...]} and legacy full export
+                    const incoming = data.scripts || data.userScripts || (Array.isArray(data) ? data : null);
+                    if (incoming && Array.isArray(incoming)) {
+                        if (confirm('هل تريد استبدال كل السكريبتات التي أضفتها أنت محليًا؟ (لن تمسح السكريبتات الافتراضية)')) {
+                            // ensure ids don't collide with defaults
+                            const maxDefaultId = Math.max(...defaultScripts.map(s => s.id || 0), 0);
+                            let maxUserId = Math.max(0, ...incoming.map(s => s.id || 0));
+                            if (maxUserId <= maxDefaultId) {
+                                // reassign ids to avoid collisions
+                                incoming.forEach((s, i) => s.id = maxDefaultId + 1 + i);
+                            }
+                            userScripts = incoming;
+                            scripts = [...defaultScripts, ...userScripts];
                             nextId = Math.max(...scripts.map(s => s.id || 0), 0) + 1;
-                            saveScripts();
+                            saveUserScripts(userScripts);
                             filterScripts();
                             showNotification('تم الاستيراد');
                         }
                     } else {
                         showNotification('ملف غير صحيح', 'error');
                     }
-                } catch (e) {
+                } catch (err) {
                     showNotification('خطأ في قراءة الملف', 'error');
                 }
             };
             reader.readAsText(file);
         }
 
-        // Clear all
+        // Clear all user-added scripts (does not remove defaults)
         function clearAll() {
-            if (confirm('هل تريد مسح كل السكريبتات؟\nهذا الإجراء لا يمكن التراجع عنه.')) {
-                scripts = [];
-                saveScripts();
+            if (confirm('هل تريد مسح كل السكريبتات التي أضفتها محليًا؟\nالسكريبتات الافتراضية ستبقى كما هي.')) {
+                userScripts = [];
+                scripts = [...defaultScripts];
+                saveUserScripts(userScripts);
                 filterScripts();
-                showNotification('تم مسح كل السكريبتات');
+                showNotification('تم مسح كل السكريبتات المحليّة');
             }
         }
 
@@ -663,17 +880,8 @@
                 closeModal();
             });
 
-            // Auto-save on page close
-            window.addEventListener('beforeunload', saveScripts);
-        }
-
-        // Initialize app
-        function init() {
-            initEvents();
-            filterScripts();
-            setTimeout(() => {
-                showNotification('مرحباً! اضغط على أي نص لنسخه');
-            }, 1000);
+            // Auto-save on page close (saves user scripts only)
+            window.addEventListener('beforeunload', () => saveUserScripts(userScripts));
         }
 
         // متغير لتتبع العنصر المسحوب
@@ -712,14 +920,27 @@
                 const draggedIndex = parseInt(draggedElement.dataset.index);
                 const targetIndex = parseInt(this.dataset.index);
                 
-                // نقل العنصر في المصفوفة
+                // Move item in filtered array
                 const draggedItem = filteredScripts[draggedIndex];
-                filteredScripts.splice(draggedIndex, 1);
-                filteredScripts.splice(targetIndex, 0, draggedItem);
+                // If either draggedItem or target is a default script, we won't change default order globally.
+                // We'll only reorder within the current user's combined view by rearranging userScripts accordingly.
                 
-                // تحديث المصفوفة الأساسية
-                scripts = [...filteredScripts];
-                saveScripts();
+                // Compute a new ordering for userScripts after the drop.
+                // Strategy: build a new combined array by moving the draggedItem to targetIndex in filteredScripts,
+                // then extract the userScripts items in that order and save them.
+                
+                const newFiltered = [...filteredScripts];
+                newFiltered.splice(draggedIndex, 1);
+                newFiltered.splice(targetIndex, 0, draggedItem);
+
+                // Extract user script items in the new order
+                const newUserOrder = newFiltered.filter(item => !defaultIds.has(item.id));
+
+                // Update userScripts and combined scripts
+                userScripts = newUserOrder;
+                scripts = [...defaultScripts, ...userScripts];
+
+                saveUserScripts(userScripts);
                 renderTable();
                 showNotification('تم إعادة الترتيب');
             }
@@ -738,6 +959,14 @@
         }
 
         // Start app
+        function init() {
+            initEvents();
+            filterScripts();
+            setTimeout(() => {
+                showNotification('مرحباً! اضغط على أي نص لنسخه');
+            }, 1000);
+        }
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {
